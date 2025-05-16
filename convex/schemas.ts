@@ -1,7 +1,7 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
-const EMBEDDING_DIMENSION = 1536; // Dimension for your chosen embedding model (e.g., OpenAI's text-embedding-ada-002 is 1536)
+const EMBEDDING_DIMENSION = 1536; 
 
 export default defineSchema({
   user: defineTable({
@@ -24,9 +24,9 @@ export default defineSchema({
 
     chunks: defineTable({
     userId: v.id("user"),        
-    documentId: v.id("document"),    // Which original document this chunk came from
+    documentId: v.id("document"),    // Which original document the chunk came from
     text:v.string(),             // The actual text content of the chunk
-    embedding: v.array(v.float64()), // The vector embedding for this chunk's text
+    embedding: v.array(v.float64()), // The vector embedding for the chunk's text
     processedAt: v.number(),
   })
   .vectorIndex("by_embedding", {
