@@ -1,6 +1,8 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+const EMBEDDING_DIMENSION = 1536; // Dimension for your chosen embedding model (e.g., OpenAI's text-embedding-ada-002 is 1536)
+
 export default defineSchema({
   user: defineTable({
     body: v.string(),
@@ -12,18 +14,29 @@ export default defineSchema({
     fileName: v.string(),
     fileUrl: v.optional(v.string()), 
     textContent: v.string(), 
-    chunks: v.array(v.object({
-      id: v.string(),
-      text: v.string(), 
-      startOffset: v.number(), 
-      endOffset: v.number(),
-    })),
+    type: v.union(v.literal("pdf"), v.literal("txt"), v.literal("gdoc"), v.literal("url")),
     status: v.union(
       v.literal("processing"),
       v.literal("ready"),
       v.literal("failed")
     ),
     }),
+
+    chunks: defineTable({
+    userId: v.id("user"),        
+    documentId: v.id("document"),    // Which original document this chunk came from
+    text:v.string(),             // The actual text content of the chunk
+    embedding: v.array(v.float64()), // The vector embedding for this chunk's text
+    processedAt: v.number(),
+  })
+  .vectorIndex("by_embedding", {
+    vectorField: "embedding",
+    dimensions: EMBEDDING_DIMENSION,
+    filterFields: ["userId", "documentId"],
+  })
+  .index("by_document", ["documentId"])
+  .index("by_user_document", ["userId", "documentId"]),
+
 
     knowledgeEntries: defineTable({
     documentId: v.id("documents"),
@@ -42,17 +55,20 @@ export default defineSchema({
 
   notes: defineTable( {
     notebookId: v.id("notebooks"),
+    userId: v.id("users"), 
     title: v.string(),
     content: v.string(),
+    embedding: v.optional(v.array(v.float64())),
     knowledgeEntryIds: v.array(v.id("knowledgeEntries")),
     createdAt: v.number(),
     updatedAt: v.number(),
+  }).index("by_user", ["userId"])
+  .vectorIndex("by_note_embedding", {
+    vectorField: "embedding", 
+    dimensions: EMBEDDING_DIMENSION,
+    filterFields: ["userId"],
   }),
 
-  
-  chunk: defineTable({
-    text: v.string(),
-    startOffset: v.number(),
-    endOffset: v.number(),
-    }),
 });
+
+
