@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@convex-dev/auth": "^0.0.86",
+    "@google/genai": "^0.15.0",
     "convex": "^1.24.1",
     "next": "15.3.2",
     "openai": "^4.100.0",
