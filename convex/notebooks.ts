@@ -47,26 +47,26 @@ export const listNotebooks = query({
 })
 
 
-export const createNote = action({
-    args:{
-        noteBookId: v.id("notebooks"),
-        title: v.string(),
-        content: v.string(),
-        user: v.id("user"),
-        knowledgeEntryId: v.optional(v.id("knowledgeEntries")),
-    },
-    handler: async(ctx, args): Promise<Id<"notes">> => {
-        const response = await openai.embeddings.create({
-            model: "gpt-4o-mini",
-            input: args.content,
-        })
+// export const createNote = action({
+//     args:{
+//         noteBookId: v.id("notebooks"),
+//         title: v.string(),
+//         content: v.string(),
+//         user: v.id("user"),
+//         knowledgeEntryId: v.optional(v.id("knowledgeEntries")),
+//     },
+//     handler: async(ctx, args): Promise<Id<"notes">> => {
+//         const response = await openai.embeddings.create({
+//             model: "gpt-4o-mini",
+//             input: args.content,
+//         })
 
-        const embedding = response.data[0].embedding;
+//         const embedding = response.data[0].embedding;
 
-        //create note with embedding
-        return await ctx.runMutation(internal.notebooks.createNoteInternal, {
-            ...args,
-            embedding,
-        })
-    }
-})
+//         //create note with embedding
+//         return await ctx.runMutation(internal.notebooks.createNoteInternal, {
+//             ...args,
+//             embedding,
+//         })
+//     }
+// })

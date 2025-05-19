@@ -32,7 +32,7 @@ export default defineSchema({
     userId: v.id("user"),
     documentId: v.id("document"),    // Which original document this chunk came from
     text:v.string(),             // The actual text content of the chunk
-    embedding: v.array(v.float64()), // The vector embedding for this chunk's text
+    embedding: v.array(v.float64()), // The vector embedding for the chunk's text
     processedAt: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
