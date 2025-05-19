@@ -1,4 +1,3 @@
-import { getAuthUserId } from "@convex-dev/auth/server";
 import { action, internalMutation, mutation, query, QueryCtx } from "./_generated/server";
 import { DataModel, Id } from "./_generated/dataModel";
 import { v } from "convex/values";
@@ -37,7 +36,7 @@ export const createNotebooks = mutation({
 export const listNotebooks = query({
     args: {},
     handler: async(ctx: QueryCtx) => {
-        const userId = await getAuthUserId(ctx);
+        const userId = (await ctx.auth.getUserIdentity())?.subject;
         if(!userId) {
             throw new Error("User not authenticated");
         }
@@ -53,21 +52,21 @@ export const listNotebooks = query({
 
 export const createNoteInternal = internalMutation({
     args: {
-        noteBookId: v.id("notebooks"),
+        notebookId: v.id("notebooks"),
         title: v.string(),
         content: v.string(),
-        user: v.id("user"),
-        knowledgeEntryId: v.optional(v.id("knowledgeEntries")),
+        userId: v.id("user"), // Changed from user to userId
+        knowledgeEntryIds: v.array(v.id("knowledgeEntries")), // Changed from knowledgeEntryId to knowledgeEntryIds and made it an array
         embedding: v.array(v.float64()), // Assuming embedding is an array of numbers
     },
     handler: async(ctx, args) => {
-        const { noteBookId, title, content, user, knowledgeEntryId, embedding } = args;
+        const { notebookId, title, content, userId, knowledgeEntryIds, embedding } = args; // Changed user to userId, knowledgeEntryId to knowledgeEntryIds
         const note = await ctx.db.insert("notes", {
-            noteBookId,
+            notebookId,
             title,
             content,
-            user,
-            knowledgeEntryId,
+            userId, // Changed user to userId
+            knowledgeEntryIds, // Changed knowledgeEntryId to knowledgeEntryIds
             embedding,
             createdAt: Date.now(),
             updatedAt: Date.now(),
@@ -78,11 +77,11 @@ export const createNoteInternal = internalMutation({
 
 export const createNote = action({
     args:{
-        noteBookId: v.id("notebooks"),
+        notebookId: v.id("notebooks"),
         title: v.string(),
         content: v.string(),
-        user: v.id("user"),
-        knowledgeEntryId: v.optional(v.id("knowledgeEntries")),
+        userId: v.id("user"), // Changed from user to userId
+        knowledgeEntryIds: v.array(v.id("knowledgeEntries")), // Changed from knowledgeEntryId to knowledgeEntryIds and made it an array
     },
     handler: async(ctx, args): Promise<Id<"notes">> => {
         const ai = new GoogleGenAI({ apiKey: process.env.CONVEX_GEMINI_API_KEY });
@@ -116,7 +115,7 @@ export const createNote = action({
 export const listNotesByNoteBook = query({
     args:{ notebookId: v.id("notebooks") },
     handler: async(ctx, args) => {
-        const userId = await getAuthUserId(ctx);
+        const userId = (await ctx.auth.getUserIdentity())?.subject;
         if(!userId) {
             throw new Error("User not authenticated");
         }
@@ -138,16 +137,17 @@ export const createDocument = mutation({
     fileUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) throw new Error("Not authenticated");
 
-    return await ctx.db.insert("documents", {
-      userId,
+    return await ctx.db.insert("document", { 
+      userId: userId as Id<"user">,
       fileName: args.fileName,
       textContent: args.textContent,
       type: args.type,
       fileUrl: args.fileUrl,
       status: "processing",
+      createdAt: Date.now(), // Added createdAt
       updatedAt: Date.now(),
     });
   },
@@ -155,7 +155,7 @@ export const createDocument = mutation({
 
 export const updateDocument = mutation({
   args: {
-    documentId: v.id("documents"),
+    documentId: v.id("document"), // Changed from documents to document
     fileName: v.optional(v.string()),
     textContent: v.optional(v.string()),
     status: v.optional(v.union(
@@ -165,12 +165,12 @@ export const updateDocument = mutation({
     )),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) throw new Error("Not authenticated");
 
     const document = await ctx.db.get(args.documentId);
     if (!document) throw new Error("Document not found");
-    if (document.userId !== userId) throw new Error("Not authorized");
+    if (document.userId !== userId) throw new Error("Not authorized"); // Accessing document.userId
 
     const updates: any = { updatedAt: Date.now() };
     if (args.fileName !== undefined) updates.fileName = args.fileName;
@@ -183,15 +183,15 @@ export const updateDocument = mutation({
 
 export const deleteDocument = mutation({
   args: {
-    documentId: v.id("documents"),
+    documentId: v.id("document"), // Changed from documents to document
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) throw new Error("Not authenticated");
 
     const document = await ctx.db.get(args.documentId);
     if (!document) throw new Error("Document not found");
-    if (document.userId !== userId) throw new Error("Not authorized");
+    if (document.userId !== userId) throw new Error("Not authorized"); // Accessing document.userId
 
     await ctx.db.delete(args.documentId);
   },
@@ -206,23 +206,23 @@ export const listDocuments = query({
     )),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) return [];
 
     if (args.status) {
       const status = args.status;
       return await ctx.db
-        .query("documents")
-        .withIndex("by_user_status", (q) =>
-          q.eq("userId", userId).eq("status", status)
+        .query("document") // Changed from documents to document
+        .withIndex("by_user_status", (q) => // Index name matches schema
+          q.eq("userId", userId as Id<"user">).eq("status", status) // Field names match schema
         )
         .order("desc")
         .collect()
     }
 
     return await ctx.db
-      .query("documents")
-      .withIndex("by_user", q => q.eq("userId", userId))
+      .query("document") // Changed from documents to document
+      .withIndex("by_user", q => q.eq("userId", userId as Id<"user">)) // Index name and field name match schema
       .order("desc")
       .collect();
   },
@@ -230,15 +230,15 @@ export const listDocuments = query({
 
 export const getDocument = query({
   args: {
-    documentId: v.id("documents"),
+    documentId: v.id("document"), // Changed from documents to document
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) throw new Error("Not authenticated");
 
     const document = await ctx.db.get(args.documentId);
     if (!document) throw new Error("Document not found");
-    if (document.userId !== userId) throw new Error("Not authorized");
+    if (document.userId !== userId) throw new Error("Not authorized"); // Accessing document.userId
 
     return document;
   },
@@ -249,10 +249,13 @@ export const getDocument = query({
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
+    const userId = (await ctx.auth.getUserIdentity())?.subject;
     if (!userId) return null;
 
-    return await ctx.db.get(userId);
+    // Assuming the user table has a field that stores the auth subject (user ID)
+    // You might need to query the user table by this subject if it's stored there.
+    // For now, returning the subject itself as a placeholder.
+    return userId; // Returning the subject as the user ID
   },
 });
 

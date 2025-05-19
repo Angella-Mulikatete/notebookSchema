@@ -30,7 +30,7 @@ export default function NotebookList() {
     await createNotebook({
       title: newNotebook.title,
       description: newNotebook.description,
-      userId: currentUser._id,
+      userId: currentUser._id as Id<"user">,
     });
     setNewNotebook({ title: "", description: "" });
   };
