@@ -147,7 +147,7 @@ export const createDocument = mutation({
       type: args.type,
       fileUrl: args.fileUrl,
       status: "processing",
-      createdAt: Date.now(), // Added createdAt
+      createdAt: Date.now(), 
       updatedAt: Date.now(),
     });
   },
@@ -183,7 +183,7 @@ export const updateDocument = mutation({
 
 export const deleteDocument = mutation({
   args: {
-    documentId: v.id("document"), // Changed from documents to document
+    documentId: v.id("document"), 
   },
   handler: async (ctx, args) => {
     const userId = (await ctx.auth.getUserIdentity())?.subject;

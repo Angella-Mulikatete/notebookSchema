@@ -41,21 +41,25 @@ export default function DocumentList() {
           placeholder="Document content..."
           className="input-field min-h-[96px]"
         />
-        <div className="flex gap-2">
-          <select
-            value={newDoc.type}
-            onChange={(e) => setNewDoc(prev => ({ ...prev, type: e.target.value as any }))}
-            className="input-field"
-          >
-            <option value="txt">Text</option>
-            <option value="pdf">PDF</option>
-            <option value="gdoc">Google Doc</option>
-            <option value="url">URL</option>
-          </select>
+        <div className="flex gap-2 items-end">
+          <div className="flex flex-col flex-grow">
+            <label htmlFor="document-type" className="text-sm font-medium text-muted-foreground mb-1">Document Type</label>
+            <select
+              id="document-type"
+              value={newDoc.type}
+              onChange={(e) => setNewDoc(prev => ({ ...prev, type: e.target.value as any }))}
+              className="input-field"
+            >
+              <option value="txt">Text</option>
+              <option value="pdf">PDF</option>
+              <option value="gdoc">Google Doc</option>
+              <option value="url">URL</option>
+            </select>
+          </div>
           <button
             type="submit"
             disabled={!newDoc.fileName.trim()}
-            className="px-4 py-2 text-primary-foreground bg-brand-primary rounded-lg hover:bg-brand-tertiary disabled:opacity-50 ml-auto transition-colors"
+            className="px-4 py-2 text-primary-foreground bg-brand-primary rounded-lg hover:bg-brand-tertiary disabled:opacity-50 transition-colors"
           >
             Add Document
           </button>
@@ -72,7 +76,8 @@ export default function DocumentList() {
               <h3 className="font-semibold text-foreground">{doc.fileName}</h3>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">
-                  {new Date(doc.updatedAt).toLocaleDateString()}
+                  {/* {new Date(doc.updatedAt).toLocaleDateString()} */}
+                    {new Date(doc.updatedAt).toISOString().slice(0, 10)}
                 </span>
                 <span className={`px-2 py-1 text-sm rounded-full ${
                   doc.status === "ready" ? "bg-brand-secondary text-brand-primary" :

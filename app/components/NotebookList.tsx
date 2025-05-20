@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useState } from "react";
 import { Id, Doc } from "../../convex/_generated/dataModel";
+import { LocalizedDate } from "../utils/DateHelper";
 
 export default function NotebookList() {
   const notebooks: Doc<"notebooks">[] = useQuery(api.notebooks.listNotebooks) ?? [];
@@ -22,7 +23,6 @@ export default function NotebookList() {
     if (!newNotebook.title.trim()) return;
 
     if (!currentUser) {
-      // Handle case where user is not logged in, maybe disable the form or show a message
       console.error("User not authenticated.");
       return;
     }
@@ -30,7 +30,7 @@ export default function NotebookList() {
     await createNotebook({
       title: newNotebook.title,
       description: newNotebook.description,
-      userId: currentUser._id as Id<"user">,
+      userId: currentUser as Id<"user">,
     });
     setNewNotebook({ title: "", description: "" });
   };
@@ -84,7 +84,10 @@ export default function NotebookList() {
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold text-foreground">{notebook.title}</h3>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(notebook.updatedAt).toLocaleDateString()}
+                  {/* {new Date(notebook.updatedAt).toLocaleDateString()} */}
+                    {new Date(notebook.updatedAt).toISOString().slice(0, 10)}
+                    {/* <LocalizedDate timestamp={notebook.updatedAt} /> */}
+
                 </span>
               </div>
               {notebook.description && (
@@ -100,7 +103,8 @@ export default function NotebookList() {
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-medium text-foreground">{note.title}</h4>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(note.updatedAt).toLocaleDateString()}
+                          {/* {new Date(note.updatedAt).toLocaleDateString()} */}
+                            {new Date(notebook.updatedAt).toISOString().slice(0, 10)}
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-3">
