@@ -310,14 +310,28 @@ export const searchChunksForContext = internalQuery({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const results = await ctx.db
-      .vectorSearch("chunks", "by_embedding", {
-        vector: args.queryEmbedding,
-        limit: args.limit ?? MAX_CONTEXT_CHUNKS,
-        filter: (q: FilterBuilder<"chunks">) => q.eq("userId", args.userId),
-      })
-      .collect(); 
+    // Fetch all chunks for the user
+    const chunks = await ctx.db
+      .query("chunks")
+      .withIndex("by_userId", q => q.eq("userId", args.userId))
+      .collect();
 
-    return results.map((chunk: Doc<"chunks"> & { _score: number }) => chunk.text).join("\n\n---\n\n");
+    // Compute cosine similarity for each chunk
+    function cosineSimilarity(a: number[], b: number[]) {
+      const dot = a.reduce((sum, ai, i) => sum + ai * b[i], 0);
+      const normA = Math.sqrt(a.reduce((sum, ai) => sum + ai * ai, 0));
+      const normB = Math.sqrt(b.reduce((sum, bi) => sum + bi * bi, 0));
+      return dot / (normA * normB);
+    }
+
+    const scored = chunks
+      .map(chunk => ({
+        ...chunk,
+        _score: cosineSimilarity(args.queryEmbedding, chunk.embedding),
+      }))
+      .sort((a, b) => b._score - a._score)
+      .slice(0, args.limit ?? MAX_CONTEXT_CHUNKS);
+
+    return scored.map(chunk => chunk.text).join("\n\n---\n\n");
   }
 });

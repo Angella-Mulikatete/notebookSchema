@@ -30,7 +30,7 @@ import { defineSchema, defineTable } from "convex/server";
         dimensions: EMBEDDING_DIMENSION,
         filterFields: ["userId", "documentId"],
       })
-      .index("by_userId_and_documentId", ["userId", "documentId"]),
+      .index("by_userId_and_documentId", ["userId", "documentId"]).index("by_userId", ["userId"]),
     
       knowledgeEntries: defineTable({
         documentId: v.id("documents"),
