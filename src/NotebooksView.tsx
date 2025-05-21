@@ -58,7 +58,7 @@ import { useQuery, useMutation } from "convex/react";
         // Removed the outer grid structure as this component is now focused on the list and creation form
         <div className="bg-white dark:bg-dark-surface p-4 rounded-lg shadow-lg">
           <h2 className="text-2xl font-semibold mb-4 text-brand-tertiary dark:text-brand-primary">My Notebooks</h2>
-          <form onSubmit={handleCreateNotebook} className="mb-6 space-y-3">
+          <form onSubmit={(event) => { void handleCreateNotebook(event); }} className="mb-6 space-y-3">
             <div>
               <input
                 type="text"
@@ -103,7 +103,7 @@ import { useQuery, useMutation } from "convex/react";
                 <button
                   onClick={(e) => {
                     e.stopPropagation(); 
-                    handleDeleteNotebook(notebook._id);
+                    void handleDeleteNotebook(notebook._id);
                   }}
                   className="text-brand-red hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity p-1"
                   title="Delete notebook"

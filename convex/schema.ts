@@ -9,13 +9,15 @@ import { defineSchema, defineTable } from "convex/server";
         userId: v.id("users"), 
         fileName: v.string(),
         fileUrl: v.optional(v.string()),
-        textContent: v.string(),
+        textContent: v.optional(v.string()), 
         type: v.union(v.literal("pdf"), v.literal("txt"), v.literal("gdoc"), v.literal("url")),
         status: v.union(
           v.literal("processing"),
           v.literal("ready"),
           v.literal("failed")
         ),
+        storageId: v.optional(v.id("_storage")),
+        updatedAt: v.optional(v.number()),
       })
       .index("by_userId_and_status", ["userId", "status"]),
     
@@ -77,7 +79,39 @@ import { defineSchema, defineTable } from "convex/server";
       // For ordering by creationTime within a notebook, just querying by notebookId is sufficient
       // as the default order or .order("asc")/.order("desc") on the query will use _creationTime.
       .index("by_notebookId", ["notebookId"]), 
+
+      //table for generated content(study guides, faqs, etc.)
+      generatedContent: defineTable({
+        userId: v.id("users"), 
+        notebookId: v.id("notebooks"),
+        title: v.string(),
+        contentType: v.union(
+          v.literal("study_guide"), 
+          v.literal("faq"),
+          v.literal("briefing_doc"), 
+          v.literal("timeline")
+        ),
+        content: v.string(),
+        sourceDocuments: v.array(v.id("documents")),
+        creationDate: v.optional(v.string()),
+        lastUpdated: v.optional(v.string()),
+      })
+      .index("by_userId", ["userId"])
+      .index("by_notebookId", ["notebookId"])
+      .index("by_notebookId_and_contentType", ["notebookId","contentType"]),
+
+      //table to track document-notebook association
+      documentNotebookLinks: defineTable({
+      documentId: v.id("documents"),
+      notebookId: v.id("notebooks"),
+      userId: v.id("users"),
+      })
+      .index("by_notebookId", ["notebookId"])
+      .index("by_documentId", ["documentId"])
+      .index("by_userId", ["userId"]),
+
     };
+
     
     export default defineSchema({
       ...authTables, 

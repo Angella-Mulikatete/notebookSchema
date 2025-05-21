@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as auth from "../auth.js";
 import type * as chat from "../chat.js";
+import type * as documentProcessing from "../documentProcessing.js";
 import type * as documents from "../documents.js";
 import type * as http from "../http.js";
 import type * as notebooks from "../notebooks.js";
@@ -31,6 +32,7 @@ import type * as router from "../router.js";
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   chat: typeof chat;
+  documentProcessing: typeof documentProcessing;
   documents: typeof documents;
   http: typeof http;
   notebooks: typeof notebooks;
